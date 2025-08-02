@@ -474,7 +474,12 @@
                                 buttonsHTML = `<a href="${event.url}" target="_blank" class="action-button">線上收聽</a>`;
                             } else if (event.type === 'physical') {
                                 const calendarLink = createGoogleCalendarLink(event, dateString);
+                                const encodedLocation = encodeURIComponent(event.location);
+                                const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodedLocation}`;
+                                
                                 buttonsHTML = `<a href="${calendarLink}" target="_blank" class="action-button">新增至行事曆</a>`;
+                                buttonsHTML += `<a href="${mapsUrl}" target="_blank" class="action-button ml-2">導航</a>`;
+                                
                                 if (event.url) {
                                     buttonsHTML += `<a href="${event.url}" target="_blank" class="action-button ml-2">活動資訊</a>`;
                                 }
