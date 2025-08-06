@@ -317,8 +317,8 @@
                     <!-- Day names will be injected here -->
                 </div>
                  <!-- Event Details -->
-                <div id="event-details" class="mt-6 p-4 bg-white/5 rounded-lg min-h-[120px] flex items-center justify-center">
-                    <p id="event-text" class="text-pink-200">點擊有標示的日期查看活動詳情。</p>
+                <div id="event-details" class="mt-6 p-4 bg-white/5 rounded-lg min-h-[120px]">
+                    <!-- Event list or details will be injected here -->
                 </div>
             </div>
         </section>
@@ -417,6 +417,91 @@
                 return `${base}&text=${title}&dates=${dates}&location=${location}`;
             }
 
+            function showEventDetails(event, dateString) {
+                const date = new Date(dateString + 'T00:00:00');
+                const month = date.getMonth() + 1;
+                const day = date.getDate();
+
+                let buttonsHTML = '';
+                const calendarLink = createGoogleCalendarLink(event, dateString);
+
+                const calendarIcon = `<svg class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.75 2a.75.75 0 01.75.75V4h7V2.75a.75.75 0 011.5 0V4h.25A2.75 2.75 0 0118 6.75v8.5A2.75 2.75 0 0115.25 18H4.75A2.75 2.75 0 012 15.25v-8.5A2.75 2.75 0 014.75 4H5V2.75A.75.75 0 015.75 2zM4.5 8.25a.75.75 0 000 1.5h11a.75.75 0 000-1.5h-11z" clip-rule="evenodd" /></svg>`;
+                const navIcon = `<svg class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9.69 18.933l.003.001C9.89 19.02 10 19 10 19s.11.02.308-.066l.002-.001.006-.003.018-.008a5.741 5.741 0 00.281-.14c.186-.1.4-.223.654-.369.625-.36.991-.721 1.224-1.057a6.25 6.25 0 001.25-2.274A4.992 4.992 0 0010 4.5a4.992 4.992 0 00-5.002 5.002c0 .99.29 1.92.82 2.724.233.336.6.697 1.224 1.057.254.146.468.27.654.369a5.74 5.74 0 00.28.14l.019.008.006.003.002.001zM10 8a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" /></svg>`;
+                const infoIcon = `<svg class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" /></svg>`;
+                const listenIcon = `<svg class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M7 4a1 1 0 00-1 1v10.191a2.5 2.5 0 102 1.309V8.21a1 1 0 00-.293-.707L8.414 6.21a1 1 0 00-.707-.293H7zM14 4a1 1 0 00-1 1v6.191a2.5 2.5 0 102 1.309V5a1 1 0 00-1-1z" /></svg>`;
+
+                buttonsHTML = `<a href="${calendarLink}" target="_blank" class="action-button">${calendarIcon}新增至行事曆</a>`;
+                if (event.type === 'physical') {
+                    const encodedLocation = encodeURIComponent(event.location);
+                    const mapsLink = `https://www.google.com/maps/search/?api=1&query=${encodedLocation}`;
+                    buttonsHTML += `<a href="${mapsLink}" target="_blank" class="action-button ml-2">${navIcon}導航</a>`;
+                    if (event.url) {
+                        buttonsHTML += `<a href="${event.url}" target="_blank" class="action-button ml-2">${infoIcon}活動資訊</a>`;
+                    }
+                } else if (event.type === 'online') {
+                    if (event.url) {
+                         buttonsHTML += `<a href="${event.url}" target="_blank" class="action-button ml-2">${listenIcon}線上收聽</a>`;
+                    }
+                }
+                
+                eventDetailsEl.innerHTML = `
+                    <div class="text-left w-full">
+                        <p class="text-lg font-bold text-white">${month}/${day} 活動</p>
+                        <p class="text-pink-100 mt-1">${event.title}</p>
+                        <p class="text-sm text-pink-200/80 mt-1">時間：${event.time || ''}</p>
+                        <p class="text-sm text-pink-200/80 mt-1">地點：${event.location}</p>
+                        <div class="flex flex-wrap">${buttonsHTML}</div>
+                    </div>
+                `;
+            }
+
+            function displayMonthEvents(year, month) {
+                const monthEvents = Object.keys(events)
+                    .filter(dateString => {
+                        const eventDate = new Date(dateString + 'T00:00:00');
+                        return eventDate.getFullYear() === year && eventDate.getMonth() === month;
+                    })
+                    .sort((a, b) => new Date(a) - new Date(b));
+
+                if (monthEvents.length === 0) {
+                    eventDetailsEl.innerHTML = `<p class="text-pink-200 text-center w-full">本月尚無公開行程。</p>`;
+                    return;
+                }
+
+                let monthEventsHTML = '<div class="w-full space-y-3">';
+                monthEvents.forEach(dateString => {
+                    const event = events[dateString];
+                    const date = new Date(dateString + 'T00:00:00');
+                    const day = date.getDate();
+                    
+                    monthEventsHTML += `
+                        <button class="w-full text-left p-3 bg-white/5 hover:bg-white/10 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-pink-400" data-date="${dateString}">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0 w-12 text-center">
+                                    <p class="text-xl font-bold text-white">${day}</p>
+                                    <p class="text-xs text-pink-200">日</p>
+                                </div>
+                                <div class="border-l border-white/20 h-8 mx-4"></div>
+                                <div class="flex-1">
+                                    <p class="font-semibold text-white">${event.title}</p>
+                                    <p class="text-sm text-pink-200/80 truncate">${event.location}</p>
+                                </div>
+                            </div>
+                        </button>
+                    `;
+                });
+                monthEventsHTML += '</div>';
+                eventDetailsEl.innerHTML = monthEventsHTML;
+
+                document.querySelectorAll('#event-details button').forEach(button => {
+                    button.addEventListener('click', () => {
+                        const dateString = button.dataset.date;
+                        const event = events[dateString];
+                        showEventDetails(event, dateString);
+                    });
+                });
+            }
+
             function renderCalendar() {
                 if (!calendarGridEl) return;
                 const year = currentDate.getFullYear();
@@ -426,7 +511,7 @@
                 monthYearEl.textContent = `${year}年 ${month + 1}月`;
                 calendarGridEl.innerHTML = '';
                 
-                eventDetailsEl.innerHTML = `<p class="text-pink-200">點擊有標示的日期查看活動詳情。</p>`;
+                displayMonthEvents(year, month);
 
                 const dayNames = ['日', '一', '二', '三', '四', '五', '六'];
                 dayNames.forEach(day => {
@@ -461,45 +546,7 @@
                         dayCell.appendChild(dot);
 
                         dayCell.addEventListener('click', () => {
-                            const event = events[dateString];
-                            let buttonsHTML = '';
-                            
-                            const calendarLink = createGoogleCalendarLink(event, dateString);
-
-                            // SVG Icons
-                            const calendarIcon = `<svg class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.75 2a.75.75 0 01.75.75V4h7V2.75a.75.75 0 011.5 0V4h.25A2.75 2.75 0 0118 6.75v8.5A2.75 2.75 0 0115.25 18H4.75A2.75 2.75 0 012 15.25v-8.5A2.75 2.75 0 014.75 4H5V2.75A.75.75 0 015.75 2zM4.5 8.25a.75.75 0 000 1.5h11a.75.75 0 000-1.5h-11z" clip-rule="evenodd" /></svg>`;
-                            const navIcon = `<svg class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9.69 18.933l.003.001C9.89 19.02 10 19 10 19s.11.02.308-.066l.002-.001.006-.003.018-.008a5.741 5.741 0 00.281-.14c.186-.1.4-.223.654-.369.625-.36.991-.721 1.224-1.057a6.25 6.25 0 001.25-2.274A4.992 4.992 0 0010 4.5a4.992 4.992 0 00-5.002 5.002c0 .99.29 1.92.82 2.724.233.336.6.697 1.224 1.057.254.146.468.27.654.369a5.74 5.74 0 00.28.14l.019.008.006.003.002.001zM10 8a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" /></svg>`;
-                            const infoIcon = `<svg class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" /></svg>`;
-                            const listenIcon = `<svg class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M7 4a1 1 0 00-1 1v10.191a2.5 2.5 0 102 1.309V8.21a1 1 0 00-.293-.707L8.414 6.21a1 1 0 00-.707-.293H7zM14 4a1 1 0 00-1 1v6.191a2.5 2.5 0 102 1.309V5a1 1 0 00-1-1z" /></svg>`;
-
-                            // Always add the "Add to Calendar" button first
-                            buttonsHTML = `<a href="${calendarLink}" target="_blank" class="action-button">${calendarIcon}新增至行事曆</a>`;
-
-                            // Add other buttons based on event type
-                            if (event.type === 'physical') {
-                                const encodedLocation = encodeURIComponent(event.location);
-                                const mapsLink = `https://www.google.com/maps/search/?api=1&query=${encodedLocation}`;
-                                
-                                buttonsHTML += `<a href="${mapsLink}" target="_blank" class="action-button ml-2">${navIcon}導航</a>`;
-                                
-                                if (event.url) {
-                                    buttonsHTML += `<a href="${event.url}" target="_blank" class="action-button ml-2">${infoIcon}活動資訊</a>`;
-                                }
-                            } else if (event.type === 'online') {
-                                if (event.url) {
-                                     buttonsHTML += `<a href="${event.url}" target="_blank" class="action-button ml-2">${listenIcon}線上收聽</a>`;
-                                }
-                            }
-                            
-                            eventDetailsEl.innerHTML = `
-                                <div class="text-left w-full">
-                                    <p class="text-lg font-bold text-white">${month + 1}/${day} 活動</p>
-                                    <p class="text-pink-100 mt-1">${event.title}</p>
-                                    <p class="text-sm text-pink-200/80 mt-1">時間：${event.time || ''}</p>
-                                    <p class="text-sm text-pink-200/80 mt-1">地點：${event.location}</p>
-                                    <div class="flex flex-wrap">${buttonsHTML}</div>
-                                </div>
-                            `;
+                            showEventDetails(events[dateString], dateString);
                         });
                     }
                     calendarGridEl.appendChild(dayCell);
