@@ -373,6 +373,7 @@
             const nextMonthBtn = document.getElementById('next-month');
             const eventDetailsEl = document.getElementById('event-details');
 
+            // --- 更新後的活動資料 ---
             const events = {
                 "2024-09-22": { title: "2024六都電競", location: "高雄流行音樂中心海音館", time: "14:00 開始", type: 'physical' },
                 "2024-12-28": { title: "2025台南好Young-南瀛草地音樂會", location: "新營南瀛綠都心公園", time: "19:00 開始", type: 'physical' },
@@ -380,12 +381,13 @@
                 "2025-07-04": { title: "2025 7-ELEVEN高雄啤酒音樂節", location: "高雄夢時代前廣場", time: "15:00 - 22:00", type: 'physical' },
                 "2025-07-13": { title: "2025 S2O TAIWAN 潑水音樂節", location: "台北市大佳河濱公園", time: "14:00 - 22:00", type: 'physical' },
                 "2025-07-31": { title: "全新EP《Cloud 99》發行", location: "各大音樂平台", time: "線上發行", type: 'release' },
+                "2025-08-11": { title: "【玉歆】《Cloud 99》MV 舞蹈班", location: "PARTiii Dance Studio", time: "18:30 - 19:45", type: 'physical', url: 'https://www.instagram.com/p/DMpbgv9S-iO/?utm_source=ig_web_copy_link', details: '本活動需報名參加，限額 10 名，額滿為止' },
                 "2025-08-16": { title: "2025金崙海洋音樂節", location: "臺東縣太麻里鄉金崙海洋園區", time: "16:00 - 21:00", type: 'physical', url: 'https://www.facebook.com/share/p/1MdwPcradZ/' },
-                "2025-08-17": { title: "【若熙】Dance Cover 快閃", location: "信義香堤廣場", time: "", type: 'physical' },
+                // 2025-08-17 若熙快閃活動已取消
                 "2025-08-21": { title: "【飛碟電台】夜光家族 專訪播出", location: "線上收聽", time: "20:00 - 21:00", type: 'online', url: 'https://www.uforadio.com.tw/' },
-                "2025-08-24": { title: "【閃閃】Dance Cover 快閃", location: "信義香堤廣場", time: "", type: 'physical' },
+                "2025-08-24": { title: "【閃閃】Tobii〈Hotels Lobby〉Dance Cover 快閃", location: "信義Bellavita寶麗廣場", time: "20:30", type: 'physical' },
                 "2025-08-30": { title: "【飛碟電台】UFOSTAR聊天室 專訪播出", location: "線上收聽", time: "18:00 - 19:00", type: 'online', url: 'https://www.uforadio.com.tw/' },
-                "2025-08-31": { title: "【Ashlee】大學聲 YOUNG VOICE演唱會", location: "華山 Legacy", time: "16:00 開始", type: 'physical', url: 'https://www.facebook.com/share/p/19TaedCKat/' }
+                "2025-08-31": { title: "【Ashlee】大學聲 YOUNG VOICE演唱會", location: "華山 Legacy", time: "16:00 開始", type: 'physical', url: 'https://www.facebook.com/share/p/19TaedCKat/', details: '票價：1200元', ticketUrl: 'https://kham.com.tw/application/UTK02/UTK0201_.aspx?PRODUCT_ID=P0YOKS1X&tapeID=en04ZIzUn#' }
             };
             
             let currentDate = new Date();
@@ -402,7 +404,7 @@
                     const times = event.time.replace(/ /g, '').split('-');
                     startTime = times[0].replace(':', '') + '00';
                     endTime = times[1].replace(':', '') + '00';
-                } else if (event.time.includes('開始')) {
+                } else if (event.time.includes('開始') || /^\d{2}:\d{2}$/.test(event.time)) {
                     startTime = event.time.split(' ')[0].replace(':', '') + '00';
                     const startHour = parseInt(startTime.substring(0, 2));
                     const endHour = (startHour + 1).toString().padStart(2, '0');
@@ -418,10 +420,16 @@
                 return `${base}&text=${title}&dates=${dates}&location=${location}`;
             }
 
+            // --- 更新後的活動細節顯示功能 ---
             function showEventDetails(event, dateString) {
                 const date = new Date(dateString + 'T00:00:00');
                 const month = date.getMonth() + 1;
                 const day = date.getDate();
+
+                let detailsHTML = '';
+                if (event.details) {
+                    detailsHTML = `<p class="text-sm text-pink-200/80 mt-1">${event.details}</p>`;
+                }
 
                 let buttonsHTML = '';
                 const calendarLink = createGoogleCalendarLink(event, dateString);
@@ -430,6 +438,7 @@
                 const navIcon = `<svg class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9.69 18.933l.003.001C9.89 19.02 10 19 10 19s.11.02.308-.066l.002-.001.006-.003.018-.008a5.741 5.741 0 00.281-.14c.186-.1.4-.223.654-.369.625-.36.991-.721 1.224-1.057a6.25 6.25 0 001.25-2.274A4.992 4.992 0 0010 4.5a4.992 4.992 0 00-5.002 5.002c0 .99.29 1.92.82 2.724.233.336.6.697 1.224 1.057.254.146.468.27.654.369a5.74 5.74 0 00.28.14l.019.008.006.003.002.001zM10 8a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" /></svg>`;
                 const infoIcon = `<svg class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" /></svg>`;
                 const listenIcon = `<svg class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M7 4a1 1 0 00-1 1v10.191a2.5 2.5 0 102 1.309V8.21a1 1 0 00-.293-.707L8.414 6.21a1 1 0 00-.707-.293H7zM14 4a1 1 0 00-1 1v6.191a2.5 2.5 0 102 1.309V5a1 1 0 00-1-1z" /></svg>`;
+                const ticketIcon = `<svg class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M1.75 1.75a.75.75 0 00-1.5 0v1.5c0 .414.336.75.75.75h1.5a.75.75 0 00.75-.75v-1.5a.75.75 0 00-.75-.75zM17.5 3.25a.75.75 0 01.75-.75h1.5a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0V4a.75.75 0 01-.75-.75zM3.25 17.5a.75.75 0 01-.75.75v1.5a.75.75 0 01-1.5 0v-1.5A.75.75 0 011.75 17h.75c.414 0 .75.336.75.75zM17 16.75a.75.75 0 00.75.75h.75v1.5a.75.75 0 001.5 0v-1.5a.75.75 0 00-.75-.75h-1.5a.75.75 0 00-.75.75zM9.03 8.03a.75.75 0 00-1.06 0l-2.5 2.5a.75.75 0 001.06 1.06L9 9.06l2.47 2.47a.75.75 0 001.06-1.06l-2.5-2.5zM4.5 5.5a.75.75 0 000 1.5h11a.75.75 0 000-1.5h-11z" /></svg>`;
 
                 buttonsHTML = `<a href="${calendarLink}" target="_blank" class="action-button">${calendarIcon}新增至行事曆</a>`;
                 if (event.type === 'physical') {
@@ -437,7 +446,11 @@
                     const mapsLink = `https://www.google.com/maps/search/?api=1&query=${encodedLocation}`;
                     buttonsHTML += `<a href="${mapsLink}" target="_blank" class="action-button ml-2">${navIcon}導航</a>`;
                     if (event.url) {
-                        buttonsHTML += `<a href="${event.url}" target="_blank" class="action-button ml-2">${infoIcon}活動資訊</a>`;
+                        const buttonText = event.title.includes("舞蹈班") ? "報名資訊" : "活動資訊";
+                        buttonsHTML += `<a href="${event.url}" target="_blank" class="action-button ml-2">${infoIcon}${buttonText}</a>`;
+                    }
+                    if (event.ticketUrl) {
+                        buttonsHTML += `<a href="${event.ticketUrl}" target="_blank" class="action-button ml-2">${ticketIcon}售票資訊</a>`;
                     }
                 } else if (event.type === 'online') {
                     if (event.url) {
@@ -451,6 +464,7 @@
                         <p class="text-pink-100 mt-1">${event.title}</p>
                         <p class="text-sm text-pink-200/80 mt-1">時間：${event.time || ''}</p>
                         <p class="text-sm text-pink-200/80 mt-1">地點：${event.location}</p>
+                        ${detailsHTML}
                         <div class="flex flex-wrap">${buttonsHTML}</div>
                     </div>
                 `;
